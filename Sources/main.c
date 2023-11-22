@@ -44,5 +44,21 @@ int main() {
     double exchange_rate = get_exchange_rate(base_currency, target_currency);
     printf("1 %s = %.2f %s\n", base_currency, exchange_rate, target_currency);
 
+
+    //  API 키값 미확보로 인한 임의의 환율 구현
+     // 환율을 변수에 저장합니다.
+    float exchange_rate = 1225.00;
+
+    // 한화로 물건의 가격을 입력받습니다.
+    float won = 0.0;
+    printf("물건의 가격을 한화로 입력하세요: ");
+    scanf("%f", &won);
+
+    // 한화를 달러로 변환합니다.
+    float dollar = won / exchange_rate;
+
+    // 달러로 변환된 가격을 출력합니다.
+    printf("물건의 가격은 %.2f 달러입니다.\n", dollar);
+
     return 0;
 }
