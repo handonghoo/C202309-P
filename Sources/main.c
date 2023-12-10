@@ -1,118 +1,113 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
-// 환율 정보를 저장하기 위한 구조체
-typedef struct {
-    char base[4]; // 환율 기준 통화
-    char target[4]; // 환율 표시 통화
-    double rate; // 환율
-} ExchangeRate;
+// 환율 정보를 저장할 구조체
+struct ExchangeRate {
+    float rate;
+    char base[4];
+    char target[4];
+};
 
-// 파일에서 환율 정보를 가져오는 함수
-ExchangeRate get_exchange_rate() {
-    // 환율 정보 파일을 열기 위한 파일 포인터
-    FILE* file;
+// API로부터 환율 정보 가져오기
+float get_exchange_rate() {
+    // API 호출 및 응답 받아오기
+    // 여기에 API 호출 및 응답 받아오는 로직을 구현할 것입니다. 
+    // 응답은 JSON 형태로 받아와서 구조체에 저장하는 방식으로 처리합니다.
+    // 아래는 임시로 환율 정보를 저장하는 코드입니다.
 
-    // 파일을 열지 못하면 오류 출력
-    if (fopen_s(&file, "exchange_rate.txt", "r") != 0) {
-        fprintf(stderr, "환율 정보 파일을 열 수 없습니다.\n");
-        return (ExchangeRate) { 0 };
-    }
+    struct ExchangeRate exchangeRate;
+    exchangeRate.rate = 1130.50;  // 임시로 환율을 설정합니다.
+    strcpy(exchangeRate.base, "USD");
+    strcpy(exchangeRate.target, "KRW");
 
-    // 파일에서 한 줄씩 읽기
-    char line[256];
-    char* rate_start = NULL;
-    double exchange_rate = 0.0;
-
-    while (fgets(line, sizeof(line), file) != NULL) {
-        // KRW 환율을 찾기 위한 조건
-        rate_start = strstr(line, "\"KRW\":");
-
-        // KRW 환율이 있으면 환율을 저장
-        if (rate_start != NULL) {
-            sscanf_s(rate_start + 7, "%lf", &exchange_rate);
-            break;
-        }
-    }
-
-    // 파일을 닫기
-    fclose(file);
-
-    // 환율이 없으면 오류 출력
-    if (exchange_rate == 0.0) {
-        fprintf(stderr, "환율 정보를 찾을 수 없습니다.\n");
-        return (ExchangeRate) { 0 };
-    }
-
-    // 환율 정보를 구조체에 저장하여 반환
-    return (ExchangeRate) { "USD", "KRW", exchange_rate };
+    return exchangeRate.rate;
 }
 
-// 주별 세율을 구하는 함수
-double get_state_tax_rate(char state) {
-    // 주별 세율
-    double state_tax = 0.0;
+// 계산 결과를 저장할 구조체
+struct CalculationResult {
+    float priceInUSD;
+    float priceInKRW;
+    float tax;
+    float tip;
+    float totalPriceInUSD;
+    float totalPriceInKRW;
+};
 
-    // 주별 세율을 구하기 위한 switch 문
+void calculate_price(float exchangeRate, struct CalculationResult* result) {
+    // 미국에서의 가격
+    printf("미국에서의 가격을 입력하세요: ");
+    scanf("%f", &(result->priceInUSD));
+
+    // 한화로 변환
+    result->priceInKRW = result->priceInUSD * exchangeRate;
+    printf("한화로 변환한 가격: %.2f KRW   ", result->priceInKRW);
+
+    // 면세 여부
+    int isTaxExempt = 0;
+    printf("면세인가요? (면세면 1, 아니면 0 입력): ");
+    scanf("%d", &isTaxExempt);
+
+    // 주별 세금 비율
+    float taxRate = 0.0;
+    int state = 0;
+    printf("미국 주를 입력하세요 (1: 뉴욕, 2: 캘리포니아, 3: 텍사스): ");
+    scanf("%d", &state);
+
     switch (state) {
-    case 'A':
-        state_tax = 4.0;
+    case 1: // 뉴욕
+        taxRate = 0.08875;
         break;
-    case 'B':
-        state_tax = 5.0;
+    case 2: // 캘리포니아
+        taxRate = 0.0825;
         break;
-    case 'C':
-        state_tax = 5.6;
-        break;
-    case 'D':
-        state_tax = 6.5;
-        break;
-    case 'E':
-        state_tax = 7.25;
-        break;
-    case 'F':
-        state_tax = 2.9;
-        break;
-    case 'G':
-        state_tax = 6.35;
-        break;
-    case 'H':
-        state_tax = 0;
-        break;
-    case 'I':
-        state_tax = 6.0;
+    case 3: // 텍사스
+        taxRate = 0.0625;
         break;
     default:
-        break;
+        printf("잘못된 입력입니다.  ");
+        return;
     }
 
-    // 주별 세율을 반환
-    return state_tax;
-}
-
-// 총 비용을 계산하는 함수
-double calculate_total_cost(double amount, double exchange_rate, int duty_free, int tip, char state) {
-    // 총 비용
-    double total_cost = amount;
-
-    // 환율을 적용하여 총 비용을 계산
-    total_cost *= exchange_rate;
-
-    // 면세 여부에 따라 총 비용을 계산
-    if (duty_free) {
-        total_cost *= 1.15;
+    // 세금 계산
+    result->tax = 0.0;
+    if (!isTaxExempt) {
+        result->tax = result->priceInUSD * taxRate;
     }
 
-    // 팁 비율을 적용하여 총 비용을 계산
-    double tip_rate = tip / 100.0;
-    total_cost += total_cost * tip_rate;
+    // 팁 계산
+    float tipRate = 0.15; // 팁 비율
+    result->tip = (result->priceInUSD + result->tax) * tipRate;
 
-    // 주별 세율을 적용하여 총 비용을 계산
-    double state_tax = get_state_tax_rate(state);
-    total_cost += total_cost * state_tax;
-
-    // 총 비용을 반환
-    return total_cost;
+    // 최종 가격 계산
+    result->totalPriceInUSD = result->priceInUSD + result->tax + result->tip;
+    result->totalPriceInKRW = result->totalPriceInUSD * exchangeRate;
 }
 
+void print_result(struct CalculationResult* result) {
+    printf("세금: %.2f USD ", result->tax);
+    printf("팁: %.2f USD ", result->tip);
+    printf("최종 가격: %.2f USD ", result->totalPriceInUSD);
+    printf("최종 가격: %.2f KRW ", result->totalPriceInKRW);
+}
+
+int main() {
+    // 실시간 환율 가져오기
+    float exchangeRate = get_exchange_rate();
+
+    if (exchangeRate == 0.0) {
+        printf("실시간 환율을 가져오는데 실패했습니다. 프로그램을 종료합니다. ");
+        return 0;
+    }
+
+    struct CalculationResult result;
+
+    calculate_price(exchangeRate, &result);
+
+    print_result(&result);
+
+    return 0;
+}
