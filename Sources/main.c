@@ -4,13 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include"calculation.h"
 
-// 환율 정보를 저장할 구조체
-struct ExchangeRate {
-    float rate;
-    char base[4];
-    char target[4];
-};
 
 // API로부터 환율 정보 가져오기
 float get_exchange_rate() {
@@ -18,7 +13,7 @@ float get_exchange_rate() {
     // 여기에 API 호출 및 응답 받아오는 로직을 구현할 것입니다. 
     // 응답은 JSON 형태로 받아와서 구조체에 저장하는 방식으로 처리합니다.
     // 아래는 임시로 환율 정보를 저장하는 코드입니다.
-
+    // 환율 정보 API를 받지 못함
     struct ExchangeRate exchangeRate;
     exchangeRate.rate = 1130.50;  // 임시로 환율을 설정합니다.
     strcpy(exchangeRate.base, "USD");
@@ -26,16 +21,6 @@ float get_exchange_rate() {
 
     return exchangeRate.rate;
 }
-
-// 계산 결과를 저장할 구조체
-struct CalculationResult {
-    float priceInUSD;
-    float priceInKRW;
-    float tax;
-    float tip;
-    float totalPriceInUSD;
-    float totalPriceInKRW;
-};
 
 void calculate_price(float exchangeRate, struct CalculationResult* result) {
     // 미국에서의 가격
